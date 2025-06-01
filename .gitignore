@@ -1,0 +1,5 @@
+# Ignore all necessary .env files
+.env
+
+# Ignore the build folder
+./bin
