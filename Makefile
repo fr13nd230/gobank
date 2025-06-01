@@ -22,11 +22,11 @@ connectdb:
 	@docker exec -it $(DB_CONTAINER) psql -d $(POSTGRES_DB) -U $(POSTGRES_USER) -W $(POSTGRES_PASSWORD)
 	
 migrate:
-	@migrate create -ext sql -dir db/migrations -seq gobank_schema
+	@migrate create -ext sql -dir database/db/migrations -seq gobank_schema
 migrate-up:
-	@migrate -database $(DB_PATH) -path db/migrations up 
+	@migrate -database $(DB_PATH) -path database/db/migrations up 
 migrate-down:
-	@migrate -database $(DB_PATH) -path db/migrations down 
+	@migrate -database $(DB_PATH) -path database/db/migrations down 
 fixdirty:
 	@docker exec -it $(DB_CONTAINER) psql -c "drop table if exists schema_migrations;" -d $(POSTGRES_DB) -U $(POSTGRES_USER) -W $(POSTGRES_PASSWORD)
 	

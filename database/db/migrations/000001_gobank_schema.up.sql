@@ -1,11 +1,11 @@
-CREATE TYPE transferstatus AS ENUM (
+CREATE TYPE public.transferstatus AS ENUM (
   'created',
   'processed',
   'failure',
   'success'
 );
 
-CREATE TABLE accounts (
+CREATE TABLE public.accounts (
   id uuid PRIMARY KEY NOT NULL,
   owner text NOT NULL,
   balance float NOT NULL DEFAULT 0,
@@ -14,7 +14,7 @@ CREATE TABLE accounts (
   updated_at timestamp NOT NULL DEFAULT now()
 );
 
-CREATE TABLE transfers (
+CREATE TABLE public.transfers (
   id uuid PRIMARY KEY NOT NULL,
   from_acc uuid NOT NULL,
   to_acc uuid NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE transfers (
   FOREIGN KEY (to_acc) REFERENCES accounts (id)
 );
 
-CREATE TABLE entries (
+CREATE TABLE public.entries (
   id uuid PRIMARY KEY NOT NULL,
   account_id uuid NOT NULL,
   transfer_id uuid NOT NULL,
