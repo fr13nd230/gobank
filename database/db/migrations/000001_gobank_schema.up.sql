@@ -22,8 +22,8 @@ CREATE TABLE public.transfers (
   status transferstatus NOT NULL DEFAULT 'created',
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now(),
-  FOREIGN KEY (from_acc) REFERENCES accounts (id),
-  FOREIGN KEY (to_acc) REFERENCES accounts (id)
+  FOREIGN KEY (from_acc) REFERENCES accounts (id) ON DELETE CASCADE,
+  FOREIGN KEY (to_acc) REFERENCES accounts (id) ON DELETE CASCADE
 );
 
 CREATE TABLE public.entries (
@@ -33,8 +33,8 @@ CREATE TABLE public.entries (
   amount float NOT NULL,
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now(),
-  FOREIGN KEY (account_id) REFERENCES accounts (id),
-  FOREIGN KEY (transfer_id) REFERENCES transfers (id)
+  FOREIGN KEY (account_id) REFERENCES accounts (id) ON DELETE SET NULL,
+  FOREIGN KEY (transfer_id) REFERENCES transfers (id) ON DELETE SET NULL
 );
 
 CREATE INDEX owner_idx ON accounts (owner);
