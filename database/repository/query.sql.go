@@ -7,14 +7,199 @@ package repository
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const findAccounts = `-- name: FindAccounts :many
-SELECT id, owner, balance, currency, created_at, updated_at FROM accounts
+const deleteAccountById = `-- name: DeleteAccountById :exec
+DELETE FROM accounts WHERE id = $1
 `
 
-func (q *Queries) FindAccounts(ctx context.Context) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, findAccounts)
+func (q *Queries) DeleteAccountById(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteAccountById, id)
+	return err
+}
+
+const deleteEntryById = `-- name: DeleteEntryById :exec
+DELETE FROM entries WHERE id = $1
+`
+
+func (q *Queries) DeleteEntryById(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteEntryById, id)
+	return err
+}
+
+const deleteTransferById = `-- name: DeleteTransferById :exec
+DELETE from transfers WHERE id = $1
+`
+
+func (q *Queries) DeleteTransferById(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteTransferById, id)
+	return err
+}
+
+const findAccountById = `-- name: FindAccountById :one
+SELECT id, owner, balance, currency, created_at, updated_at
+FROM accounts
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) FindAccountById(ctx context.Context, id pgtype.UUID) (Account, error) {
+	row := q.db.QueryRow(ctx, findAccountById, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const findEntriesByTrAcc = `-- name: FindEntriesByTrAcc :many
+SELECT id, account_id, transfer_id, amount, created_at, updated_at 
+FROM entries
+WHERE account_id = $1 or transfer_id = $1
+ORDER BY created_at, updated_at
+LIMIT $1
+OFFSET $2
+`
+
+type FindEntriesByTrAccParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) FindEntriesByTrAcc(ctx context.Context, arg FindEntriesByTrAccParams) ([]Entry, error) {
+	rows, err := q.db.Query(ctx, findEntriesByTrAcc, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Entry
+	for rows.Next() {
+		var i Entry
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.TransferID,
+			&i.Amount,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findEntryById = `-- name: FindEntryById :one
+SELECT id, account_id, transfer_id, amount, created_at, updated_at
+FROM entries
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) FindEntryById(ctx context.Context, id pgtype.UUID) (Entry, error) {
+	row := q.db.QueryRow(ctx, findEntryById, id)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.TransferID,
+		&i.Amount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const findTransferById = `-- name: FindTransferById :one
+SELECT id, from_acc, to_acc, amount, status, created_at, updated_at
+from transfers
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) FindTransferById(ctx context.Context, id pgtype.UUID) (Transfer, error) {
+	row := q.db.QueryRow(ctx, findTransferById, id)
+	var i Transfer
+	err := row.Scan(
+		&i.ID,
+		&i.FromAcc,
+		&i.ToAcc,
+		&i.Amount,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const findTransfersByAcc = `-- name: FindTransfersByAcc :many
+SELECT id, from_acc, to_acc, amount, status, created_at, updated_at 
+FROM transfers
+WHERE from_acc = $1 or to_acc = $1
+LIMIT $2
+OFFSET $3
+`
+
+type FindTransfersByAccParams struct {
+	FromAcc pgtype.UUID `json:"from_acc"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
+}
+
+func (q *Queries) FindTransfersByAcc(ctx context.Context, arg FindTransfersByAccParams) ([]Transfer, error) {
+	rows, err := q.db.Query(ctx, findTransfersByAcc, arg.FromAcc, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transfer
+	for rows.Next() {
+		var i Transfer
+		if err := rows.Scan(
+			&i.ID,
+			&i.FromAcc,
+			&i.ToAcc,
+			&i.Amount,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAccounts = `-- name: ListAccounts :many
+SELECT id, owner, balance, currency, created_at, updated_at 
+FROM accounts
+ORDER BY created_at
+LIMIT $1
+OFFSET $2
+`
+
+type ListAccountsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error) {
+	rows, err := q.db.Query(ctx, listAccounts, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -34,11 +219,243 @@ func (q *Queries) FindAccounts(ctx context.Context) ([]Account, error) {
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+	return items, nil
+}
+
+const listEntries = `-- name: ListEntries :many
+SELECT id, account_id, transfer_id, amount, created_at, updated_at 
+FROM entries
+ORDER BY created_at
+LIMIT $1
+OFFSET $2
+`
+
+type ListEntriesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListEntries(ctx context.Context, arg ListEntriesParams) ([]Entry, error) {
+	rows, err := q.db.Query(ctx, listEntries, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Entry
+	for rows.Next() {
+		var i Entry
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.TransferID,
+			&i.Amount,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+const listTransfers = `-- name: ListTransfers :many
+SELECT id, from_acc, to_acc, amount, status, created_at, updated_at
+FROM transfers
+ORDER BY created_at, updated_at
+LIMIT $1
+OFFSET $2
+`
+
+type ListTransfersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error) {
+	rows, err := q.db.Query(ctx, listTransfers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transfer
+	for rows.Next() {
+		var i Transfer
+		if err := rows.Scan(
+			&i.ID,
+			&i.FromAcc,
+			&i.ToAcc,
+			&i.Amount,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const newAccount = `-- name: NewAccount :one
+INSERT INTO accounts(
+    owner, currency
+) VALUES (
+    $1, $2
+)
+RETURNING id, owner, balance, currency, created_at, updated_at
+`
+
+type NewAccountParams struct {
+	Owner    string `json:"owner"`
+	Currency string `json:"currency"`
+}
+
+func (q *Queries) NewAccount(ctx context.Context, arg NewAccountParams) (Account, error) {
+	row := q.db.QueryRow(ctx, newAccount, arg.Owner, arg.Currency)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const newEntry = `-- name: NewEntry :one
+INSERT INTO entries (
+    account_id, transfer_id, amount
+) VALUES (
+    $1, $2, $3
+)
+RETURNING id, account_id, transfer_id, amount, created_at, updated_at
+`
+
+type NewEntryParams struct {
+	AccountID  pgtype.UUID `json:"account_id"`
+	TransferID pgtype.UUID `json:"transfer_id"`
+	Amount     float64     `json:"amount"`
+}
+
+func (q *Queries) NewEntry(ctx context.Context, arg NewEntryParams) (Entry, error) {
+	row := q.db.QueryRow(ctx, newEntry, arg.AccountID, arg.TransferID, arg.Amount)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.TransferID,
+		&i.Amount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const newTransfer = `-- name: NewTransfer :one
+INSERT INTO transfers(
+    from_acc, to_acc, amount, status
+) VALUES (
+    $1, $2, $3, $4
+)
+RETURNING id, from_acc, to_acc, amount, status, created_at, updated_at
+`
+
+type NewTransferParams struct {
+	FromAcc pgtype.UUID    `json:"from_acc"`
+	ToAcc   pgtype.UUID    `json:"to_acc"`
+	Amount  float64        `json:"amount"`
+	Status  Transferstatus `json:"status"`
+}
+
+func (q *Queries) NewTransfer(ctx context.Context, arg NewTransferParams) (Transfer, error) {
+	row := q.db.QueryRow(ctx, newTransfer,
+		arg.FromAcc,
+		arg.ToAcc,
+		arg.Amount,
+		arg.Status,
+	)
+	var i Transfer
+	err := row.Scan(
+		&i.ID,
+		&i.FromAcc,
+		&i.ToAcc,
+		&i.Amount,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateAccountById = `-- name: UpdateAccountById :one
+UPDATE accounts
+SET owner = $2, currency = $3, updated_at = now()
+WHERE id = $1
+RETURNING owner, currency
+`
+
+type UpdateAccountByIdParams struct {
+	ID       pgtype.UUID `json:"id"`
+	Owner    string      `json:"owner"`
+	Currency string      `json:"currency"`
+}
+
+type UpdateAccountByIdRow struct {
+	Owner    string `json:"owner"`
+	Currency string `json:"currency"`
+}
+
+func (q *Queries) UpdateAccountById(ctx context.Context, arg UpdateAccountByIdParams) (UpdateAccountByIdRow, error) {
+	row := q.db.QueryRow(ctx, updateAccountById, arg.ID, arg.Owner, arg.Currency)
+	var i UpdateAccountByIdRow
+	err := row.Scan(&i.Owner, &i.Currency)
+	return i, err
+}
+
+const updateEntryById = `-- name: UpdateEntryById :one
+UPDATE entries SET amount = $2, updated_at = now()
+WHERE id = $1
+RETURNING amount
+`
+
+type UpdateEntryByIdParams struct {
+	ID     pgtype.UUID `json:"id"`
+	Amount float64     `json:"amount"`
+}
+
+func (q *Queries) UpdateEntryById(ctx context.Context, arg UpdateEntryByIdParams) (float64, error) {
+	row := q.db.QueryRow(ctx, updateEntryById, arg.ID, arg.Amount)
+	var amount float64
+	err := row.Scan(&amount)
+	return amount, err
+}
+
+const updateTransferById = `-- name: UpdateTransferById :one
+UPDATE transfers SET status = $2, updated_at = now()
+WHERE id = $1
+RETURNING status
+`
+
+type UpdateTransferByIdParams struct {
+	ID     pgtype.UUID    `json:"id"`
+	Status Transferstatus `json:"status"`
+}
+
+func (q *Queries) UpdateTransferById(ctx context.Context, arg UpdateTransferByIdParams) (Transferstatus, error) {
+	row := q.db.QueryRow(ctx, updateTransferById, arg.ID, arg.Status)
+	var status Transferstatus
+	err := row.Scan(&status)
+	return status, err
 }

@@ -7,9 +7,8 @@ package repository
 import (
 	"database/sql/driver"
 	"fmt"
-	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Transferstatus string
@@ -57,29 +56,29 @@ func (ns NullTransferstatus) Value() (driver.Value, error) {
 }
 
 type Account struct {
-	ID        uuid.UUID `json:"id"`
-	Owner     string    `json:"owner"`
-	Balance   float64   `json:"balance"`
-	Currency  string    `json:"currency"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        pgtype.UUID      `json:"id"`
+	Owner     string           `json:"owner"`
+	Balance   float64          `json:"balance"`
+	Currency  string           `json:"currency"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type Entry struct {
-	ID         uuid.UUID `json:"id"`
-	AccountID  uuid.UUID `json:"account_id"`
-	TransferID uuid.UUID `json:"transfer_id"`
-	Amount     float64   `json:"amount"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID         pgtype.UUID      `json:"id"`
+	AccountID  pgtype.UUID      `json:"account_id"`
+	TransferID pgtype.UUID      `json:"transfer_id"`
+	Amount     float64          `json:"amount"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
 }
 
 type Transfer struct {
-	ID        uuid.UUID      `json:"id"`
-	FromAcc   uuid.UUID      `json:"from_acc"`
-	ToAcc     uuid.UUID      `json:"to_acc"`
-	Amount    float64        `json:"amount"`
-	Status    Transferstatus `json:"status"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID        pgtype.UUID      `json:"id"`
+	FromAcc   pgtype.UUID      `json:"from_acc"`
+	ToAcc     pgtype.UUID      `json:"to_acc"`
+	Amount    float64          `json:"amount"`
+	Status    Transferstatus   `json:"status"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }

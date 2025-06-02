@@ -1,10 +1,10 @@
 include .env
 
 build:
-	@go build main.go -o /bin/gobank
+	@go build -o /bin/gobank
 	
 test:
-	@go test -v -coverage ./...
+	@go test ./... -v -cover 
 	
 run:
 	@go run main.go
@@ -29,5 +29,7 @@ migrate-down:
 	@migrate -database $(DB_PATH) -path database/db/migrations down 
 fixdirty:
 	@docker exec -it $(DB_CONTAINER) psql -c "drop table if exists schema_migrations;" -d $(POSTGRES_DB) -U $(POSTGRES_USER) -W $(POSTGRES_PASSWORD)
+gensqlc:
+	@sqlc generate
 	
-.PHONY: createdb dropdb connectdb cmp-up cmp-down test run build create-migrate migrate-up migrate-down
+.PHONY: createdb dropdb connectdb cmp-up cmp-down test run build create-migrate migrate-up migrate-down gensqlc
