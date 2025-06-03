@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -27,8 +26,6 @@ func main() {
 		log.Fatalf("Error while loading .env file: %v", err)
 	}
 	
-	fmt.Print(cfg.GetVar("PORT"))
-
 	<-ctx.Done() // Leave this in here for now
 	os.Exit(0)
 }
