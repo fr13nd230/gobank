@@ -2,4 +2,4 @@
 .env
 
 # Ignore the build folder
-./bin
+bin/
