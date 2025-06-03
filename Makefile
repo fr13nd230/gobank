@@ -9,6 +9,10 @@ test:
 run:
 	@go run main.go
 	
+start:
+	@docker start $(DB_CONTAINER)
+stop:
+	@docker stop $(DB_CONTAINER)
 cmp-up:
 	@docker compose up -d --build
 cmp-down:

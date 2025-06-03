@@ -84,8 +84,8 @@ SELECT *
 FROM entries
 WHERE account_id = $1 or transfer_id = $1
 ORDER BY created_at, updated_at
-LIMIT $1
-OFFSET $2;
+LIMIT $2
+OFFSET $3;
 
 -- name: FindEntryById :one
 SELECT *

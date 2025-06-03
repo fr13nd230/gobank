@@ -64,17 +64,18 @@ SELECT id, account_id, transfer_id, amount, created_at, updated_at
 FROM entries
 WHERE account_id = $1 or transfer_id = $1
 ORDER BY created_at, updated_at
-LIMIT $1
-OFFSET $2
+LIMIT $2
+OFFSET $3
 `
 
 type FindEntriesByTrAccParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	AccountID pgtype.UUID `json:"account_id"`
+	Limit     int32       `json:"limit"`
+	Offset    int32       `json:"offset"`
 }
 
 func (q *Queries) FindEntriesByTrAcc(ctx context.Context, arg FindEntriesByTrAccParams) ([]Entry, error) {
-	rows, err := q.db.Query(ctx, findEntriesByTrAcc, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, findEntriesByTrAcc, arg.AccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
