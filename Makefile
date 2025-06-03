@@ -1,13 +1,13 @@
 include .env
 
 build:
-	@go build -o /bin/gobank
-	
+	@go build -o ./bin/gobank ./src 	
 test:
 	@go test ./... -v -cover 
-	
 run:
-	@go run main.go
+	@go run ./src/main.go
+dev:
+	@air
 	
 start:
 	@docker start $(DB_CONTAINER)
