@@ -1,0 +1,7 @@
+
+[build]
+    cmd = "make build"
+    bin = "bin/gobank"
+    include_ext = ["go", "html", "yaml", "yml", "json", "toml"]
+    exclude_dir = ["bin"]
+    delay = 2000
