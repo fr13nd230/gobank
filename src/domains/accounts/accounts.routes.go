@@ -1,8 +1,10 @@
 package accounts
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/fr13nd230/gobank/database/repository"
+	"github.com/gofiber/fiber/v2"
+)
 
-func RegisterRoutes(r fiber.Router) {
-	
-	r.Post("/account", CreateAccountHandler)
+func RegisterRoutes(r fiber.Router, q *repository.Queries) {
+	r.Post("/account", CreateAccountHandler(q))
 }

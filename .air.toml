@@ -2,6 +2,28 @@
 [build]
     cmd = "make build"
     bin = "bin/gobank"
-    include_ext = ["go", "html", "yaml", "yml", "json", "toml"]
-    exclude_dir = ["bin"]
-    delay = 2000
+    include_ext = ["go", "yaml", "yml", "json", "toml"]
+    exclude_dir = ["tmp", "bin", ".vscode", ".github", "database/db"]
+    exclude_regex = ["_test.go", ".*\\.db$"]
+    kill_delay = "2s"
+    send_interrupt = true
+    stop_on_root = true
+    delay = 1000
+    
+[color]
+  app = "Fiber Go Bank"
+  build = "yellow"
+  main = "magenta"
+  runner = "green"
+  watcher = "cyan"
+
+[log]
+  main_only = false
+  time = false
+
+[misc]
+  clean_on_exit = false
+
+[screen]
+  clear_on_rebuild = false
+  keep_scroll = true

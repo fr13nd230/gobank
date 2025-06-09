@@ -3,3 +3,7 @@
 
 # Ignore the build folder
 bin/
+
+# Ignore the build errors
+tmp/
+logs/
