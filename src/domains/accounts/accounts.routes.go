@@ -7,4 +7,5 @@ import (
 
 func RegisterRoutes(r fiber.Router, q *repository.Queries) {
     r.Post("/account", CreateAccountHandler(q))
+    r.Get("/accounts", ListAccountsHandler(q))
 }

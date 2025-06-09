@@ -9,7 +9,7 @@ RETURNING *;
 -- name: ListAccounts :many
 SELECT * 
 FROM accounts
-ORDER BY created_at
+ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2;
 
@@ -39,7 +39,7 @@ RETURNING *;
 -- name: ListTransfers :many
 SELECT *
 FROM transfers
-ORDER BY created_at, updated_at
+ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2;
 
@@ -53,6 +53,7 @@ LIMIT 1;
 SELECT * 
 FROM transfers
 WHERE from_acc = $1 or to_acc = $1
+ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3;
 
@@ -75,7 +76,7 @@ RETURNING *;
 -- name: ListEntries :many
 SELECT * 
 FROM entries
-ORDER BY created_at
+ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2;
 
@@ -83,7 +84,7 @@ OFFSET $2;
 SELECT * 
 FROM entries
 WHERE account_id = $1 or transfer_id = $1
-ORDER BY created_at, updated_at
+ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3;
 
