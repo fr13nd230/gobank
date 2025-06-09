@@ -33,17 +33,16 @@ func main() {
 	
 	err := cfg.LoadConfig()
 	if err != nil {
-		log.Printf("Error while loading .env file: %v", err)
+		log.Printf("[Config]: Error while loading .env file: %v", err)
 	}
 	port := cfg.GetVar("PORT")
 	dbPath := cfg.GetVar("POSTGRES_PATH")
 	
 	q, err := repository.NewDb(dbPath)
-	
 	if err != nil {
-		log.Printf("Error %v: ", err)
+		log.Printf("[Database]: Error while creating new queries: %v", err)
 	}
-	
+		
 	app := fiber.New(fiber.Config{
 		Prefork: false,
 		CaseSensitive: true,
@@ -84,7 +83,6 @@ func main() {
 	log.Print("[localhost]: Server is starting...", "port", port)
 	
 	serverErrs := make(chan error, 1)
-	
 	go func() {
 		serverErrs <- app.Listen(port)
 	}()
