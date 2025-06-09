@@ -14,7 +14,7 @@ func NewClient() *redis.Client {
 
 func newRedisOpts() *redis.Options {
     config.LoadConfig("../../.env")
-    db, _ := strconv.ParseInt(config.GetVar("REDIS_DB"), 10, 64)
+    db, _ := strconv.ParseInt(config.GetVar("REDIS_DB"), 10, 0)
     return &redis.Options{
         Addr: config.GetVar("REDIS_ADDR"),
         DB: int(db),
