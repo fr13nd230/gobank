@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"log/slog"
-	"os"
+	"log"
 	"os/signal"
 	"syscall"
 	"time"
 
 	cfg "github.com/fr13nd230/gobank/config"
+	"github.com/fr13nd230/gobank/database/repository"
 	"github.com/fr13nd230/gobank/src/domains/accounts"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
@@ -20,23 +20,29 @@ import (
 	fRecover "github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-// Represents the main entry file for now
-// until we complete setting up all necessaries.
+// main represent the entry point and mouting point
+// of all configurations in the project.
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 	defer func(){
 		if r := recover(); r != nil {
-			slog.Info("Recovered from panic: %s", r)
+			log.Print("[Server]: Recovered from panic.", r)
 		}
 	}()
 	
 	err := cfg.LoadConfig()
 	if err != nil {
-		slog.Error("Error while loading .env file: %v", err)
+		log.Printf("Error while loading .env file: %v", err)
 	}
-	
 	port := cfg.GetVar("PORT")
+	dbPath := cfg.GetVar("POSTGRES_PATH")
+	
+	q, err := repository.NewDb(dbPath)
+	
+	if err != nil {
+		log.Printf("Error %v: ", err)
+	}
 	
 	app := fiber.New(fiber.Config{
 		Prefork: false,
@@ -44,14 +50,13 @@ func main() {
 		BodyLimit: 25 * 1024 * 1024,
 		JSONEncoder: json.Marshal,
 		JSONDecoder: json.Unmarshal,
-		// TODO: To be handled later 
-		// ErrorHandler:,
+		// ErrorHandler: func(c *fiber.Ctx) error {}
 	})
 	
 	app.Use(fRecover.New())
 	app.Use(limiter.New(limiter.Config{
-		Max: 60000,
-		Expiration: 5 * time.Minute,
+		Max: 200,
+		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()
 		},
@@ -72,21 +77,36 @@ func main() {
 		Lock: nil,
 		Storage: nil,
 	}))
-	
+		
 	v1 := app.Group("/v1")
-	registerRoutesV1(v1)
+	registerRoutesV1(v1, q)
 	
-	if err := app.Listen(port); err != nil {
-		slog.Error("Server error while listening on %s, with error: %v", port, err)
-	} else {
-		slog.Info("[http://localhost:%s]: Server is running.", port)
+	log.Print("[localhost]: Server is starting...", "port", port)
+	
+	serverErrs := make(chan error, 1)
+	
+	go func() {
+		serverErrs <- app.Listen(port)
+	}()
+	
+	select {
+	case err := <-serverErrs:
+		log.Print("[localhost]: Could not start the server.", "error", err)
+	case <-ctx.Done():
+		log.Print("[Server]: Shutdown signal received, shutting down gracefully...")
+		
+		shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		
+		if err := app.ShutdownWithContext(shutCtx); err != nil {
+			log.Printf("[Server]: Could not shutdown properly: %v", err)
+		}
+		
+		log.Print("[Server]: Server shutdown complete")
 	}
-	
-	<-ctx.Done()
-	os.Exit(0)
 }
 
-func registerRoutesV1(r fiber.Router) {
+func registerRoutesV1(r fiber.Router, q *repository.Queries) {
 	// Mount Accounts Routes
-	accounts.RegisterRoutes(r)
+	accounts.RegisterRoutes(r, q)
 }

@@ -23,7 +23,7 @@ createdb:
 dropdb:
 	@docker exec -it $(DB_CONTAINER) dropdb -U $(POSTGRES_USER) gobank
 connectdb: 
-	@docker exec -it $(DB_CONTAINER) psql -d $(POSTGRES_DB) -U $(POSTGRES_USER) -W $(POSTGRES_PASSWORD)
+	@docker exec -it $(DB_CONTAINER) psql -d $(POSTGRES_DB) -U $(POSTGRES_USER)
 	
 migrate:
 	@migrate create -ext sql -dir database/db/migrations -seq gobank_schema

@@ -1,6 +1,10 @@
 package accounts
 
 import (
+	"context"
+	"log/slog"
+
+	"github.com/fr13nd230/gobank/database/repository"
 	"github.com/fr13nd230/gobank/src/types"
 	"github.com/gofiber/fiber/v2"
 )
@@ -10,44 +14,65 @@ type CreateAccountBody struct {
 	Currency string `json:"currency" form:"currency"`
 }
 
-func CreateAccountHandler(c *fiber.Ctx) error {//(rp.Account, error) {
-	
-	// TODO: Get Body
-	user := new(CreateAccountBody)
-	
-	if err := c.BodyParser(user); err != nil {
-		return err
+func CreateAccountHandler(q *repository.Queries) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		body := new(CreateAccountBody)
+		if err := c.BodyParser(body); err != nil {
+			r := types.NewBase(
+				false,
+				fiber.StatusBadRequest,
+				"Body is invalid JSON or encoded forms.",
+			)
+		
+			return c.Status(fiber.StatusBadRequest).JSON(r)
+		} 
+		
+		arg := repository.NewAccountParams{
+			Owner: body.Owner,
+			Currency: body.Currency,
+		}
+		acc, err := CreateAccountProvider(context.Background(), arg, q)
+		if err != nil {
+			slog.Error("[AccountsHandlers]: Could not call the provier", "error", err)
+			r := types.NewBase(
+				false,
+				fiber.StatusBadRequest,
+				"Something bad happened, try again later.",
+			)
+			return c.Status(fiber.StatusBadRequest).JSON(r)
+		} 
+		
+		r := types.NewResponse[repository.Account](
+			false, 
+			fiber.StatusOK, 
+			"Account created successfully", 
+			acc,
+		)
+		
+		return c.Status(fiber.StatusOK).JSON(r)
 	}
-	
-	// TODO: Validate Body
-	// Create New Arg
-	// TODO: Call Database
-	// Return Account, nil
-	// 
-	
-	r := types.NewResponse[CreateAccountBody](
-		false, 
-		fiber.StatusOK, 
-		"Account created successfully", 
-		*user,
-	)
-	
-	c.SendStatus(fiber.StatusOK)
-	return c.JSON(r)
 }
 
-func ListAccountsHandler(c *fiber.Ctx) string {
-	return ""
+func ListAccountsHandler(q *repository.Queries) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		return nil
+	}
 }
 
-func FindAccountByIdHandler(c *fiber.Ctx) string {
-	return ""
+func FindAccountByIdHandler(q *repository.Queries) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		return nil
+	}
 }
 
-func UpdateAccountByIdHandler(c *fiber.Ctx) string {
-	return ""
+func UpdateAccountByIdHandler(q *repository.Queries) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		return nil
+	}
 }
 
-func DeleteAccountByIdHandler(c *fiber.Ctx) string {
-	return ""
+func DeleteAccountByIdHandler(q *repository.Queries) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		return nil
+	}
 }
