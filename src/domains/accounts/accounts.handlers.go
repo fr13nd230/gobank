@@ -55,7 +55,31 @@ func CreateAccountHandler(q *repository.Queries) fiber.Handler {
 
 func ListAccountsHandler(q *repository.Queries) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		return nil
+		limit := c.QueryInt("limit", 10)
+		offset := c.QueryInt("offset", 0)
+	    arg := repository.ListAccountsParams{
+			Limit: int32(limit),
+			Offset: int32(offset),
+		}
+		
+		accs, err := ListAccountsProviderfunc(context.Background(), arg, q)
+		if err != nil {
+		    slog.Error("[AccountsHandlers]: List accounts provider failed", "error", err)
+			r := types.NewBase(
+			    false, 
+				fiber.StatusBadRequest, 
+				"Something bad happened, try again later",
+			)
+			return c.Status(fiber.StatusBadRequest).JSON(r)
+		}
+		
+		r := types.NewManyResponse(
+		    true, 
+			fiber.StatusOK, 
+			"Accounts has been fetched succesfully.",
+			accs,
+		)
+		return c.Status(fiber.StatusOK).JSON(r)
 	}
 }
 

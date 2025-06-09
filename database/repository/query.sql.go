@@ -63,7 +63,7 @@ const findEntriesByTrAcc = `-- name: FindEntriesByTrAcc :many
 SELECT id, account_id, transfer_id, amount, created_at, updated_at 
 FROM entries
 WHERE account_id = $1 or transfer_id = $1
-ORDER BY created_at, updated_at
+ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3
 `
@@ -148,6 +148,7 @@ const findTransfersByAcc = `-- name: FindTransfersByAcc :many
 SELECT id, from_acc, to_acc, amount, status, created_at, updated_at 
 FROM transfers
 WHERE from_acc = $1 or to_acc = $1
+ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3
 `
@@ -189,7 +190,7 @@ func (q *Queries) FindTransfersByAcc(ctx context.Context, arg FindTransfersByAcc
 const listAccounts = `-- name: ListAccounts :many
 SELECT id, owner, balance, currency, created_at, updated_at 
 FROM accounts
-ORDER BY created_at
+ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2
 `
@@ -229,7 +230,7 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 const listEntries = `-- name: ListEntries :many
 SELECT id, account_id, transfer_id, amount, created_at, updated_at 
 FROM entries
-ORDER BY created_at
+ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2
 `
@@ -269,7 +270,7 @@ func (q *Queries) ListEntries(ctx context.Context, arg ListEntriesParams) ([]Ent
 const listTransfers = `-- name: ListTransfers :many
 SELECT id, from_acc, to_acc, amount, status, created_at, updated_at
 FROM transfers
-ORDER BY created_at, updated_at
+ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2
 `

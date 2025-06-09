@@ -1,6 +1,5 @@
 include .env
 
-# General application commands
 build:
 	@go build -o ./bin/gobank ./src 	
 test:
@@ -10,21 +9,19 @@ run:
 dev:
 	@air
 	
-# Docker commands mostly abbreviations
 startdb:
 	@docker start $(DB_CONTAINER)
 stopdb:
 	@docker stop $(DB_CONTAINER)
-# startcache:
-#     @docker start $(CACHE_CONTAINER)
-# stopcache:
-#     @docker stop $(CACHE_CONTAINER)
+startcache:
+	@docker start $(CACHE_CONTAINER)
+stopcache:
+	@docker stop $(CACHE_CONTAINER)
 cmp-up:
 	@docker compose up -d --build
 cmp-down:
 	@docker compose down -v
 	
-# Database related commands
 createdb:
 	@docker exec -it $(DB_CONTAINER) createdb -U $(POSTGRES_USER) -W $(POSTGRES_PASSWORD) 
 dropdb:
@@ -32,7 +29,6 @@ dropdb:
 connectdb: 
 	@docker exec -it $(DB_CONTAINER) psql -d $(POSTGRES_DB) -U $(POSTGRES_USER)
 	
-# Only migration related commands
 migrate:
 	@migrate create -ext sql -dir database/db/migrations -seq gobank_schema
 migrate-up:
@@ -44,5 +40,4 @@ fixdirty:
 gensqlc:
 	@sqlc generate
 
-# Add to phony list	
 .PHONY: createdb dropdb connectdb cmp-up cmp-down test run build create-migrate migrate-up migrate-down gensqlc
