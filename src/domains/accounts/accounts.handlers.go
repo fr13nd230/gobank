@@ -2,11 +2,14 @@ package accounts
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
+	"github.com/emicklei/pgtalk/convert"
 	"github.com/fr13nd230/gobank/database/repository"
 	"github.com/fr13nd230/gobank/src/types"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5"
 )
 
 type CreateAccountBody struct {
@@ -49,7 +52,7 @@ func CreateAccountHandler(q *repository.Queries) fiber.Handler {
 			acc,
 		)
 		
-		return c.Status(fiber.StatusOK).JSON(r)
+		return c.Status(fiber.StatusCreated).JSON(r)
 	}
 }
 
@@ -62,7 +65,7 @@ func ListAccountsHandler(q *repository.Queries) fiber.Handler {
 			Offset: int32(offset),
 		}
 		
-		accs, err := ListAccountsProviderfunc(context.Background(), arg, q)
+		accs, err := ListAccountsProvider(context.Background(), arg, q)
 		if err != nil {
 		    slog.Error("[AccountsHandlers]: List accounts provider failed", "error", err)
 			r := types.NewBase(
@@ -73,7 +76,7 @@ func ListAccountsHandler(q *repository.Queries) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(r)
 		}
 		
-		r := types.NewManyResponse(
+		r := types.NewManyResponse[repository.Account](
 		    true, 
 			fiber.StatusOK, 
 			"Accounts has been fetched succesfully.",
@@ -85,7 +88,34 @@ func ListAccountsHandler(q *repository.Queries) fiber.Handler {
 
 func FindAccountByIdHandler(q *repository.Queries) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		return nil
+	    id := convert.StringToUUID(c.Params("id", ""))
+		acc, err := FindAccountByIdProvider(context.Background(), id, q)
+		if err == pgx.ErrNoRows {
+            r := types.NewBase(
+                false,
+                fiber.StatusNotFound,
+                fmt.Sprintf("Account with id: %s, is not found. Possibly deleted.", id),
+            )
+            return c.Status(fiber.StatusOK).JSON(r)			
+		}
+		if err != nil {
+		    slog.Error("[AccountsHandlers]: Couldn not fetch the account with ", "id", id, "error", err)
+		    r := types.NewBase(
+				false,
+				fiber.StatusBadRequest,
+				"Something bad happened, try again later.",
+			)
+			return c.Status(fiber.StatusOK).JSON(r)			
+		}
+		
+		r := types.NewResponse[repository.Account](
+		    true, 
+			fiber.StatusOK, 
+			"Account has been fetched succesfully.",
+			acc,
+		)
+		
+		return c.Status(fiber.StatusOK).JSON(r)
 	}
 }
 
