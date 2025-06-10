@@ -11,6 +11,7 @@ import (
 	"github.com/fr13nd230/gobank/database/repository"
 	"github.com/fr13nd230/gobank/src/domains/accounts"
 	"github.com/goccy/go-json"
+	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -75,6 +76,12 @@ func main() {
 		Lifetime: 40 * time.Minute,
 		Lock: nil,
 		Storage: nil,
+	}))
+	app.Use(swagger.New(swagger.Config{
+        BasePath: "/v1",
+        Path: "docs",
+        FilePath: "./docs/v1/swagger.json",
+        Title: "Welcome to Go Bank API Documentation",
 	}))
 		
 	v1 := app.Group("/v1")
