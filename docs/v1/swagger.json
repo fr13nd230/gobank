@@ -1,0 +1,18 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Welcome to Go Bank API documentation.",
+        "description": "This will be the entry of all endpoints, their documentation, responses, schemas and so on.",
+        "version": "v1.0.1",
+        "license": {
+           "name": "MIT",
+           "url": "https://opensource.org/licenses/MIT"
+        } 
+    },
+    "security": [
+        {
+          "bearerAuth": []
+        }
+    ],
+    "paths": {}
+}
